@@ -2,21 +2,38 @@ const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 
+//Start up prompts
+function init() {
+    inquirer
+        .prompt([
+        {
+            type: 'list',
+            name: 'init',
+            message: "Would would you like to do?",
+            choices: ['View all departments', 'View all roles', 'View all personnel', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member']
+        },
+        ])
+    .then((answers) => {
+        console.log(answers.init);
+        if (answers.init === "View all departments") {
+          console.log("View all departments")
+        } else if (answers.init === "View all roles") {
+            console.log("View all roles");
+        } else if (answers.init === "View all personnel") {
+            console.log("View all personnel");
+        } else if (answers.init === "Add a department") {
+            console.log("Add a department");
+        } else if (answers.init === "Add a role") {
+            console.log("Add a role");
+        } else if (answers.init === "Add a crew member") {
+            console.log("Add a crew member");
+        } else {
+            console.log("Update a crew member");
+        };
+      }); 
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+init();
 
 //Required Prompts
 //On start up
