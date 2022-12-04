@@ -13,8 +13,8 @@ const db = mysql.createConnection(
     console.log(`Connected to the books_db database.`)
   );
 
+//Function and variable for rendering art on startup  
 let art = "                                              _______----_______\r\n                                   ___---~~~~~.. ... .... ... ..~~~~~---___\r\n                             _ ==============================================\r\n __________________________ - .. ..   _--~~~~~-------____-------~~~~~\r\n(______________________][__)____     -\r\n   \/       \/______---~~~.. .. ..~~-_~\r\n  <_______________________________-\r\n      ~~~~~~~-----__           __-\r\n                    ~~~~~~~~~~~\r\n\r\n                                _____.-----._____\r\n                   ___----~~~~~~. ... ..... ... .~~~~~~----___\r\n                =================================================\r\n                   ~~~-----......._____________.......-----~~~\r\n                    (____)          \\   |   \/          (____)\r\n                      ||           _\/   |   \\_           ||\r\n                       \\\\_______--~  \/\/~~~\\\\  ~--_______\/\/\r\n                        `~~~~---__   \\\\___\/\/   __---~~~~\'\r\n                                  ~~-_______-~~\r\n\r\n                U S S   E N T E R P R I S E   N C C - 1 7 0 1 - D"
-
 function renderArt () {
     console.log(art)
 }
@@ -64,6 +64,7 @@ function viewRoles () {
 })
 };
 
+//Still require correction
 function viewCrew () {
     db.query('SELECT * FROM crew', function (err, results) {
         console.table(results);
@@ -72,11 +73,52 @@ function viewCrew () {
 };
 
 function addDept () {
-console.log("Add a department");
+    inquirer
+        .prompt([
+        {
+            type: 'input',
+            name: 'addDept',
+            message: "Please enter name of department you would like to add",
+        },
+        ])
+    .then((answer) => {
+        db.query('INSERT INTO department (department_name) VALUES (?)', answer.addDept, (err, results) => {
+            db.query('SELECT * FROM department', function (err, results) {
+                console.table(results);
+                init();
+            })
+        })
+      });
 };
 
+//Nice to have, table before prompt showing current roles, ranks, department_id, with coresponding dept_name
 function addRole () {
-console.log("Add a role");
+    inquirer
+        .prompt([
+        {
+            type: 'input',
+            name: 'addTitle',
+            message: "Please enter name of role you would like to add",
+        },
+        {
+            type: 'input',
+            name: 'addRank',
+            message: "Please enter, in numbers, the rank associated with this role",
+        },
+        {
+            type: 'input',
+            name: 'addDeptId',
+            message: "Please enter the associated department ID for this role",
+        },
+        ])
+    .then((answers) => {
+        db.query('INSERT INTO roles (title, rank, department_id) VALUES (?, ?, ?)', [answers.addTitle, answers.addRank, answers.addDeptId], (err, results) => {
+            db.query('SELECT * FROM role', function (err, results) {
+                console.table(results);
+                init();
+            })
+        })
+      });
 };
 
 function addCrew () {
@@ -92,13 +134,11 @@ renderArt();
 init();
 
 
-//View employees
+//View crew
 //  Table showing employee id, firt name, last name job title, dept, salary, and manager the employee reports to
 
-//Add department 
-//  Prompted to enter the name of department and its added to database (show all departments after)
 
-//Add role
+//Add role 
 //  Prompted to enter name, salary, and department of role and is added to db (show roles after)
 
 //Add employee 
@@ -112,4 +152,8 @@ init();
 //view employees by department
 //Delete departments, roles, employees
 //View total utilized budged of a department (combined salaries of all employees in dept)
+
+//Double Bonus
+//Chalk it up!
+//Exit function
 
