@@ -4,14 +4,14 @@ LEFT JOIN roles
 ON department.id = roles.department_id
 ORDER BY department.id;
 
-SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank
-FROM crew
-LEFT JOIN roles ON roles.id = crew.role_id
-LEFT JOIN department ON department.id = roles.department_id
-SELECT crew.manager_id AS manager 
-FROM crew
-
-ORDER BY crew.last_name;
+SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name 
+FROM crew 
+JOIN roles 
+ON crew.role_id = roles.id
+JOIN department 
+ON department.id = roles.department_id
+LEFT JOIN crew AS manager 
+ON crew.manager_id = manager.id;
 
 
 --Crew

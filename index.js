@@ -2,6 +2,13 @@ const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 
+const crewNameArr = [];
+const crewIdArr = [];
+const roleArr = [];
+const roleIdArr = [];
+const deptArr = [];
+const deptIdArr = [];
+
 // Connect to database
 const db = mysql.createConnection(
     {
@@ -19,8 +26,36 @@ function renderArt () {
     console.log(art)
 }
 
+
 //Init prompts
 function init() {
+
+    db.query('SELECT * FROM crew',  function loadCrewArr (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            crewNameArr.push(results[i].first_name + ' ' + results[i].last_name);
+            crewIdArr.push(results[i].id)
+            // console.log(crewNameArr[i]);
+            // console.log(crewIdArr[i]);
+        };
+    });
+
+
+    db.query('SELECT * FROM roles', function loadRoleArr (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            roleArr.push(results[i].title);
+            roleIdArr.push(results[i].id);
+            // console.log(roleArr[i]);
+            // console.log(roleIdArr[i]);
+        };
+    });
+
+    db.query('SELECT * FROM department', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            deptArr.push(results[i].department_name);
+            deptIdArr.push(results[i].id);
+        };
+    });
+
     inquirer
         .prompt([
         {
@@ -53,8 +88,6 @@ function init() {
 function viewDept () {
     db.query('SELECT * FROM department', function (err, results) {
         console.table(results);
-       //let test = results[1].department_name
-        //console.log(test);
         init();
 })
 };
@@ -68,7 +101,7 @@ function viewRoles () {
 
 //Still require correction
 function viewCrew () {
-    db.query('SELECT * FROM crew', function (err, results) {
+    db.query("SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name FROM crew JOIN roles ON crew.role_id = roles.id JOIN department ON department.id = roles.department_id LEFT JOIN crew AS manager ON crew.manager_id = manager.id", function (err, results) {
         console.table(results);
         init();
 })
@@ -85,23 +118,12 @@ function addDept () {
         ])
     .then((answer) => {
         db.query('INSERT INTO department (department_name) VALUES (?)', answer.addDept, (err, results) => {
-            db.query('SELECT * FROM department', function (err, results) {
-                console.table(results);
-                init();
-            })
+            viewDept();
         })
       });
 };
 
 function addRole () {
-    const deptArr = [];
-    const deptIdArr = [];
-    db.query('SELECT * FROM department', function (err, results) {
-        for (let i = 0; i < results.length; i++) {
-            deptArr.push(results[i].department_name);
-            deptIdArr.push(results[i].id);
-        };
-    });
     inquirer
         .prompt([
         {
@@ -128,37 +150,15 @@ function addRole () {
                 deptAnswer = deptIdArr[i];
                 break;
             } 
-        }
-        console.log(`The dept answer is ${deptAnswer}`);
+        };
         db.query('INSERT INTO roles (title, `rank`, department_id) VALUES (?, ?, ?)', [answers.addTitle, answers.addRank, deptAnswer], (err, results) => {
-            db.query('SELECT * FROM role', function (err, results) {
-                console.table(results);
-                init();
-            })
+            viewRoles();
         })
       });
 };
 
-//Drop down menu for selecting role and manager
+//Still require updated veiwCrew function
 function addCrew () {
-    console.log("Add Crew function");
-    const roleArr = [];
-    const roleIdArr = [];
-    db.query('SELECT * FROM roles', function (err, results) {
-        for (let i = 0; i < results.length; i++) {
-            roleArr.push(results[i].title);
-            roleIdArr.push(results[i].id);
-        };
-    });
-    const managerNameArr = [];
-    db.query('SELECT * FROM crew', function (err, results) {
-        for (let i = 0; i < results.length; i++) {
-            managerNameArr.push(results[i].first_name + ' ' + results[i].last_name);
-            console.log(managerNameArr[i]);
-        };
-    });
-
-
     inquirer
         .prompt([
         {
@@ -172,32 +172,79 @@ function addCrew () {
             message: "Please enter the last name of the new crew member.",
         },
         {
-            type: 'input',
-            name: 'addRoleId',
-            message: "Please enter the associated role ID for this new crew member.",
+            type: 'list',
+            name: 'addCrewRole',
+            message: "Please select the new crew member's role.",
+            choices: roleArr,
         },
         {
-            type: 'input',
-            name: 'addManagerId',
-            message: "Please enter the associated manager ID for this new crew member.",
+            type: 'list',
+            name: 'addCrewManager',
+            message: "Please select the new crew member's manager.",
+            choices: crewNameArr,
         },
         ])
     .then((answers) => {
+        let roleAnswer;
+        for (let i = 0; i < roleArr.length; i++) {
+            if (answers.addCrewRole === roleArr[i]) {
+                roleAnswer = roleIdArr[i];
+                break;
+            } 
+        };
+        let managerAnswer;
+        for (let i = 0; i < crewNameArr.length; i++) {
+            if (answers.addCrewManager === crewNameArr[i]) {
+                managerAnswer = crewIdArr[i];
+                break;
+            } 
+        };
         let firstName= JSON.stringify(answers.addFirst).replace(/['"]+/g, '');
         let lastName= JSON.stringify(answers.addLast).replace(/['"]+/g, '');
-        db.query('INSERT INTO crew (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, answers.addRoleId, answers.addManagerId], (err, results) => {
-            db.query('SELECT * FROM crew', function (err, results) {
-                console.table(results);
-                init();
-            })
+        db.query('INSERT INTO crew (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, roleAnswer, managerAnswer], (err, results) => {
+                viewCrew();
         })
       });
 };
 
-function updateCrew () {
-console.log("Update a crew member");
-};
 
+function updateCrew () {
+    inquirer    
+        .prompt([
+        {
+            type: 'list',
+            name: 'updateCrewAnswer',
+            message: "Please select the crew member you would like to update.",
+            choices: crewNameArr,
+        },
+        {
+            type: 'list',
+            name: 'updateRoleAnswer',
+            message: "Please select their new role.",
+            choices: roleArr,
+        },
+        ])
+    .then((answers) => {
+        let newRoleAnswer;
+        for (let i = 0; i < roleArr.length; i++) {
+            if (answers.updateRoleAnswer === roleArr[i]) {
+                newRoleAnswer = roleIdArr[i];
+                break;
+            } 
+        };
+        let updateCrewAnswer;
+        for (let i = 0; i < crewNameArr.length; i++) {
+            if (answers.updateCrewAnswer === crewNameArr[i]) {
+                updateCrewAnswer = crewIdArr[i];
+                break;
+            } 
+        };
+        db.query(`UPDATE crew SET role_id = ${newRoleAnswer} WHERE id = ${updateCrewAnswer}`, (err, results) => {
+            viewCrew();
+        })
+      });
+      
+};
 
 renderArt();
 init();
@@ -205,13 +252,10 @@ init();
 
 //View crew
 //  Table showing employee id, firt name, last name job title, dept, salary, and manager the employee reports to
+//1 select employee name
+//2 assign new role to selected employee
 
 
-//Add role 
-//  Prompted to enter name, salary, and department of role and is added to db (show roles after)
-
-//Add employee 
-//  Prompted to enter firt name, last name, role, and manager and new employee is added to database (show employees afterwards)
 
 //Add exit command to init() prompts
 
@@ -224,5 +268,5 @@ init();
 
 //Double Bonus
 //Chalk it up!
-//Exit function
+//Add Borg battle where crew gets assimilated and database corrupted.
 
