@@ -53,6 +53,8 @@ function init() {
 function viewDept () {
     db.query('SELECT * FROM department', function (err, results) {
         console.table(results);
+       //let test = results[1].department_name
+        //console.log(test);
         init();
 })
 };
@@ -91,8 +93,15 @@ function addDept () {
       });
 };
 
-//Nice to have, table before prompt showing current roles, ranks, department_id, with coresponding dept_name
 function addRole () {
+    const deptArr = [];
+    const deptIdArr = [];
+    db.query('SELECT * FROM department', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            deptArr.push(results[i].department_name);
+            deptIdArr.push(results[i].id);
+        };
+    });
     inquirer
         .prompt([
         {
@@ -106,13 +115,22 @@ function addRole () {
             message: "Please enter, in numbers, the rank associated with this role",
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'addDeptId',
             message: "Please enter the associated department ID for this role",
+            choices: deptArr,
         },
         ])
     .then((answers) => {
-        db.query('INSERT INTO roles (title, rank, department_id) VALUES (?, ?, ?)', [answers.addTitle, answers.addRank, answers.addDeptId], (err, results) => {
+        let deptAnswer;
+        for (let i = 0; i < deptArr.length; i++) {
+            if (answers.addDeptId === deptArr[i]) {
+                deptAnswer = deptIdArr[i];
+                break;
+            } 
+        }
+        console.log(`The dept answer is ${deptAnswer}`);
+        db.query('INSERT INTO roles (title, `rank`, department_id) VALUES (?, ?, ?)', [answers.addTitle, answers.addRank, deptAnswer], (err, results) => {
             db.query('SELECT * FROM role', function (err, results) {
                 console.table(results);
                 init();
@@ -121,8 +139,59 @@ function addRole () {
       });
 };
 
+//Drop down menu for selecting role and manager
 function addCrew () {
-console.log("Add a crew member");
+    console.log("Add Crew function");
+    const roleArr = [];
+    const roleIdArr = [];
+    db.query('SELECT * FROM roles', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            roleArr.push(results[i].title);
+            roleIdArr.push(results[i].id);
+        };
+    });
+    const managerNameArr = [];
+    db.query('SELECT * FROM crew', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            managerNameArr.push(results[i].first_name + ' ' + results[i].last_name);
+            console.log(managerNameArr[i]);
+        };
+    });
+
+
+    inquirer
+        .prompt([
+        {
+            type: 'input',
+            name: 'addFirst',
+            message: "Please enter the first name of the new crew member.",
+        },
+        {
+            type: 'input',
+            name: 'addLast',
+            message: "Please enter the last name of the new crew member.",
+        },
+        {
+            type: 'input',
+            name: 'addRoleId',
+            message: "Please enter the associated role ID for this new crew member.",
+        },
+        {
+            type: 'input',
+            name: 'addManagerId',
+            message: "Please enter the associated manager ID for this new crew member.",
+        },
+        ])
+    .then((answers) => {
+        let firstName= JSON.stringify(answers.addFirst).replace(/['"]+/g, '');
+        let lastName= JSON.stringify(answers.addLast).replace(/['"]+/g, '');
+        db.query('INSERT INTO crew (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, answers.addRoleId, answers.addManagerId], (err, results) => {
+            db.query('SELECT * FROM crew', function (err, results) {
+                console.table(results);
+                init();
+            })
+        })
+      });
 };
 
 function updateCrew () {
