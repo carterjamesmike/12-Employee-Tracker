@@ -1,13 +1,17 @@
+--Drop and create new db--
 DROP DATABASE IF EXISTS crew_db;
 CREATE DATABASE crew_db;
 
+--Use db--
 USE crew_db;
 
+--Create department table--
 CREATE TABLE department (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
     department_name VARCHAR(30) NOT NULL
 );
 
+--Create roles table with foreign key linked to department table--
 CREATE TABLE roles (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(30),
@@ -17,6 +21,7 @@ CREATE TABLE roles (
     REFERENCES department(id)
 );
 
+--Create crew table with foreign key linked to roles table--
 CREATE TABLE crew (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(30),

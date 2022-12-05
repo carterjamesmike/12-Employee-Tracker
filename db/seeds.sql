@@ -1,3 +1,4 @@
+--Seed data for department table--
 INSERT INTO department (department_name)
 VALUES ("Command"),
        ("Engineering"),
@@ -5,6 +6,7 @@ VALUES ("Command"),
        ("Science"),
        ("Medical");
 
+--Seed data for roles table--
 INSERT INTO roles (title, `rank`, department_id)
 VALUES  ("Captain", 6, 1),
         ("First Officer", 5, 1),
@@ -17,6 +19,7 @@ VALUES  ("Captain", 6, 1),
         ("Chief Medical Officer", 5, 5),
         ("Ship's Counselor", 4, 5);
 
+--Seed data for crew table--
 INSERT INTO crew (first_name, last_name, role_id, manager_id)
 VALUES  ("Jean-Luc", "Picard", 1, null),
         ("William", "Riker", 2, 1),

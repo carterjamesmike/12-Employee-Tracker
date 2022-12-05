@@ -1,7 +1,9 @@
+//Required modules for prompts, SQL interface, and table rendering
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 
+//Arrays that hold db data used for rendering and comparisons
 const crewNameArr = [];
 const crewIdArr = [];
 const roleArr = [];
@@ -26,26 +28,20 @@ function renderArt () {
     console.log(art)
 }
 
-
-//Init prompts
+//Init prompts, function calls, and queries for filling db arrays
 function init() {
 
     db.query('SELECT * FROM crew',  function loadCrewArr (err, results) {
         for (let i = 0; i < results.length; i++) {
             crewNameArr.push(results[i].first_name + ' ' + results[i].last_name);
             crewIdArr.push(results[i].id)
-            // console.log(crewNameArr[i]);
-            // console.log(crewIdArr[i]);
         };
     });
-
 
     db.query('SELECT * FROM roles', function loadRoleArr (err, results) {
         for (let i = 0; i < results.length; i++) {
             roleArr.push(results[i].title);
             roleIdArr.push(results[i].id);
-            // console.log(roleArr[i]);
-            // console.log(roleIdArr[i]);
         };
     });
 
@@ -62,7 +58,7 @@ function init() {
             type: 'list',
             name: 'init',
             message: "Would would you like to do?",
-            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member']
+            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member', 'Exit']
         },
         ])
     .then((answers) => {
@@ -79,12 +75,15 @@ function init() {
             addRole();
         } else if (answers.init === "Add a crew member") {
             addCrew();
-        } else {
+        } else if (answers.init === "Update a crew member") {
             updateCrew();
+        } else {
+            process.exit(0);
         };
       }); 
 };
 
+//Renders department data
 function viewDept () {
     db.query('SELECT * FROM department', function (err, results) {
         console.table(results);
@@ -92,6 +91,7 @@ function viewDept () {
 })
 };
 
+//Renders roles data
 function viewRoles () {
     db.query('SELECT roles.id, roles.title, department.department_name, roles.rank FROM department LEFT JOIN roles ON department.id = roles.department_id ORDER BY department.id', function (err, results) {
         console.table(results);
@@ -99,14 +99,15 @@ function viewRoles () {
 })
 };
 
-//Still require correction
+//Renders crew data
 function viewCrew () {
-    db.query("SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name FROM crew JOIN roles ON crew.role_id = roles.id JOIN department ON department.id = roles.department_id LEFT JOIN crew AS manager ON crew.manager_id = manager.id", function (err, results) {
+    db.query("SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name FROM crew JOIN roles ON crew.role_id = roles.id JOIN department ON department.id = roles.department_id LEFT JOIN crew AS manager ON crew.manager_id = man", function (err, results) {
         console.table(results);
         init();
 })
 };
 
+//Adds a new department
 function addDept () {
     inquirer
         .prompt([
@@ -123,6 +124,7 @@ function addDept () {
       });
 };
 
+//Adds a new role
 function addRole () {
     inquirer
         .prompt([
@@ -157,7 +159,7 @@ function addRole () {
       });
 };
 
-//Still require updated veiwCrew function
+//Adds a new crew member
 function addCrew () {
     inquirer
         .prompt([
@@ -207,7 +209,7 @@ function addCrew () {
       });
 };
 
-
+//Updates crew role
 function updateCrew () {
     inquirer    
         .prompt([
@@ -246,18 +248,10 @@ function updateCrew () {
       
 };
 
+//Calls for rendering ASCII art and init functions
 renderArt();
 init();
 
-
-//View crew
-//  Table showing employee id, firt name, last name job title, dept, salary, and manager the employee reports to
-//1 select employee name
-//2 assign new role to selected employee
-
-
-
-//Add exit command to init() prompts
 
 //Bonus
 //Update employee managers
