@@ -10,6 +10,8 @@ const roleArr = [];
 const roleIdArr = [];
 const deptArr = [];
 const deptIdArr = [];
+const managerNameArr = [];
+const managerIDArr = [];
 
 // Connect to database
 const db = mysql.createConnection(
@@ -31,6 +33,7 @@ function renderArt () {
 //Init prompts, function calls, and queries for filling db arrays
 function init() {
 
+    //Loads crew names and id's into arrays
     db.query('SELECT * FROM crew',  function loadCrewArr (err, results) {
         for (let i = 0; i < results.length; i++) {
             crewNameArr.push(results[i].first_name + ' ' + results[i].last_name);
@@ -38,6 +41,7 @@ function init() {
         };
     });
 
+    //Loads role titles and id's into arrays
     db.query('SELECT * FROM roles', function loadRoleArr (err, results) {
         for (let i = 0; i < results.length; i++) {
             roleArr.push(results[i].title);
@@ -45,10 +49,21 @@ function init() {
         };
     });
 
+    //Loads department names and id's into arrays
     db.query('SELECT * FROM department', function (err, results) {
         for (let i = 0; i < results.length; i++) {
             deptArr.push(results[i].department_name);
             deptIdArr.push(results[i].id);
+        };
+    });
+
+    //Loads manager names and id's into roles
+    db.query('SELECT * from crew', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            if (results[i].manager_id === null) {
+                managerNameArr.push(results[i].first_name + ' ', results[i].last_name);
+                managerIDArr.push(results[i].id)
+            };
         };
     });
 
@@ -58,7 +73,7 @@ function init() {
             type: 'list',
             name: 'init',
             message: "Would would you like to do?",
-            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member', 'Exit']
+            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member role', 'Update a crew member manager', 'View crew members by manager', 'Exit']
         },
         ])
     .then((answers) => {
@@ -75,8 +90,12 @@ function init() {
             addRole();
         } else if (answers.init === "Add a crew member") {
             addCrew();
-        } else if (answers.init === "Update a crew member") {
+        } else if (answers.init === "Update a crew member role") {
             updateCrew();
+        } else if (answers.init === "Update a crew member manager") {
+            updateCrewManager();
+        } else if (answers.init === "View crew members by manager") {
+            viewCrewByManager();
         } else {
             process.exit(0);
         };
@@ -101,7 +120,7 @@ function viewRoles () {
 
 //Renders crew data
 function viewCrew () {
-    db.query("SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name FROM crew JOIN roles ON crew.role_id = roles.id JOIN department ON department.id = roles.department_id LEFT JOIN crew AS manager ON crew.manager_id = man", function (err, results) {
+    db.query("SELECT crew.id, crew.first_name, crew.last_name, roles.title, department.department_name, roles.rank, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name FROM crew JOIN roles ON crew.role_id = roles.id JOIN department ON department.id = roles.department_id LEFT JOIN crew AS manager ON crew.manager_id = manager.id", function (err, results) {
         console.table(results);
         init();
 })
@@ -248,19 +267,85 @@ function updateCrew () {
       
 };
 
+//Updates crew manager
+function updateCrewManager () {
+    inquirer    
+        .prompt([
+        {
+            type: 'list',
+            name: 'updateCrewManager',
+            message: "Please select the crew member you would like to update.",
+            choices: crewNameArr,
+        },
+        {
+            type: 'list',
+            name: 'managerChoiceAnswer',
+            message: "Please select their new manager.",
+            choices: crewNameArr,
+        },
+        ])
+    .then((answers) => {
+        let newCrewManager;
+        for (let i = 0; i < roleArr.length; i++) {
+            if (answers.managerChoiceAnswer === crewNameArr[i]) {
+                newCrewManager = crewIdArr[i];
+                break;
+            } 
+        };
+        let updateCrewManager;
+        for (let i = 0; i < crewNameArr.length; i++) {
+            if (answers.updateCrewManager === crewNameArr[i]) {
+                updateCrewManager = crewIdArr[i];
+                break;
+            } 
+        };
+        db.query(`UPDATE crew SET manager_id = ${newCrewManager} WHERE id = ${updateCrewManager}`, (err, results) => {
+            viewCrew();
+        })
+      });
+      
+};
+
+//Displays first and last name of crew by specific manager
+function viewCrewByManager () {
+    inquirer    
+        .prompt([
+        {
+            type: 'list',
+            name: 'managerSelection',
+            message: "Please select the manager you wish to view.",
+            choices: managerNameArr,
+        },
+    ])
+    .then((answers) => {
+        let managerSelection;
+        for (let i = 0; i < managerNameArr.length; i++) {
+            if (answers.managerSelection === managerNameArr[i]) {
+                managerSelection = managerIDArr[i];
+                break;
+            } 
+        };
+
+        db.query(`SELECT first_name, last_name FROM crew WHERE manager_id=${managerSelection}`, (err, results) => {
+            console.table(results);
+            init();
+        })
+      });
+
+};
+
+
 //Calls for rendering ASCII art and init functions
 renderArt();
 init();
 
 
 //Bonus
-//Update employee managers
-//view employees by manager
 //view employees by department
 //Delete departments, roles, employees
 //View total utilized budged of a department (combined salaries of all employees in dept)
 
 //Double Bonus
 //Chalk it up!
-//Add Borg battle where crew gets assimilated and database corrupted.
+//Borg battle
 
