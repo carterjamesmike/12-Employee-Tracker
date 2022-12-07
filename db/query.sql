@@ -14,3 +14,10 @@ ON department.id = roles.department_id
 LEFT JOIN crew AS manager 
 ON crew.manager_id = manager.id;
 
+SELECT crew.first_name, crew.last_name, department.department_name 
+FROM crew 
+JOIN roles 
+ON crew.role_id = roles.id
+JOIN department 
+ON department.id = roles.department_id
+WHERE department_id = 2;

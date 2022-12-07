@@ -73,7 +73,7 @@ function init() {
             type: 'list',
             name: 'init',
             message: "Would would you like to do?",
-            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member role', 'Update a crew member manager', 'View crew members by manager', 'Exit']
+            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member role', 'Update a crew member manager', 'View crew members by manager', 'View crew members by department', 'Exit']
         },
         ])
     .then((answers) => {
@@ -96,6 +96,8 @@ function init() {
             updateCrewManager();
         } else if (answers.init === "View crew members by manager") {
             viewCrewByManager();
+        } else if (answers.init === "View crew members by department") {
+            viewCrewByDepartment();
         } else {
             process.exit(0);
         };
@@ -334,6 +336,34 @@ function viewCrewByManager () {
 
 };
 
+//Displays first and last name of crew by specific department
+function viewCrewByDepartment () {
+    inquirer    
+        .prompt([
+        {
+            type: 'list',
+            name: 'departmentSelector',
+            message: "Please select the department you wish to view.",
+            choices: deptArr,
+        },
+    ])
+    .then((answers) => {
+        let departmentSelector;
+        for (let i = 0; i < deptArr.length; i++) {
+            if (answers.departmentSelector === deptArr[i]) {
+                departmentSelector = deptIdArr[i];
+                break;
+            } 
+        };
+
+        db.query(`SELECT crew.first_name, crew.last_name, department.department_name FROM crew JOIN roles ON crew.role_id = roles.id JOIN department ON department.id = roles.department_id WHERE department_id = ${departmentSelector};`, (err, results) => {
+            console.table(results);
+            init();
+        })
+      });
+
+};
+
 
 //Calls for rendering ASCII art and init functions
 renderArt();
@@ -341,7 +371,6 @@ init();
 
 
 //Bonus
-//view employees by department
 //Delete departments, roles, employees
 //View total utilized budged of a department (combined salaries of all employees in dept)
 
