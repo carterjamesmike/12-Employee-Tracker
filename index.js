@@ -73,7 +73,7 @@ function init() {
             type: 'list',
             name: 'init',
             message: "Would would you like to do?",
-            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member role', 'Update a crew member manager', 'View crew members by manager', 'View crew members by department', 'Exit']
+            choices: ['View all departments', 'View all roles', 'View all crew members', 'Add a department', 'Add a role', 'Add a crew member', 'Update a crew member role', 'Update a crew member manager', 'View crew members by manager', 'View crew members by department', 'View total sum of ranks by department', 'Exit']
         },
         ])
     .then((answers) => {
@@ -98,6 +98,8 @@ function init() {
             viewCrewByManager();
         } else if (answers.init === "View crew members by department") {
             viewCrewByDepartment();
+        } else if (answers.init === "View total sum of ranks by department") {
+            viewTotalRanks();
         } else {
             process.exit(0);
         };
@@ -338,6 +340,7 @@ function viewCrewByManager () {
 
 //Displays first and last name of crew by specific department
 function viewCrewByDepartment () {
+    
     inquirer    
         .prompt([
         {
@@ -364,6 +367,33 @@ function viewCrewByDepartment () {
 
 };
 
+//Adds total 'ranks' together
+function viewTotalRanks () {
+
+    inquirer    
+        .prompt([
+        {
+            type: 'list',
+            name: 'totalRankAnswer',
+            message: "Please select the department you wish to view.",
+            choices: deptArr,
+        },
+    ])
+    .then((answer) => {
+        let totalRankAnswer;
+        for (let i = 0; i < deptArr.length; i++) {
+            if (answer.totalRankAnswer === deptArr[i]) {
+                totalRankAnswer = deptIdArr[i];
+                break;
+            } 
+        };
+
+        db.query(`SELECT SUM(roles.rank) FROM roles WHERE roles.department_id = ${totalRankAnswer};`, (err, results) => {
+            console.table(results);
+            init();
+        })
+    });
+}
 
 //Calls for rendering ASCII art and init functions
 renderArt();
@@ -372,7 +402,7 @@ init();
 
 //Bonus
 //Delete departments, roles, employees
-//View total utilized budged of a department (combined salaries of all employees in dept)
+
 
 //Double Bonus
 //Chalk it up!
